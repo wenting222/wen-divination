@@ -628,7 +628,7 @@ async function callAPI(messages) {
       "X-Title": "問一下 Wèn",
     },
     body: JSON.stringify({
-      model: "google/gemini-flash-1.5",
+      model: "google/gemini-2.5-flash-lite",
       max_tokens: 2500,
       messages: [
         { role: "system", content: SYS },
