@@ -616,33 +616,29 @@ function renderMD(text) {
   return res.join("\n");
 }
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
 async function callAPI(messages) {
-  const contents = messages.map(m => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }]
-  }));
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY,
-      },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYS }] },
-        contents,
-        generationConfig: { maxOutputTokens: 2500 },
-      }),
-    }
-  );
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "HTTP-Referer": "https://wen-divination.vercel.app",
+      "X-Title": "問一下 Wèn",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-flash-1.5",
+      max_tokens: 2500,
+      messages: [
+        { role: "system", content: SYS },
+        ...messages
+      ],
+    }),
+  });
   const data = await res.json();
-  console.log("Gemini response:", JSON.stringify(data));
   if (data.error) throw new Error(data.error.message);
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "解讀失敗，請稍後再試。";
+  return data.choices?.[0]?.message?.content || "解讀失敗，請稍後再試。";
 }
 
 // ── Components ──
