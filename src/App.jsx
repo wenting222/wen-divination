@@ -616,29 +616,15 @@ function renderMD(text) {
   return res.join("\n");
 }
 
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-
 async function callAPI(messages) {
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const res = await fetch("/api/chat", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://wen-divination.vercel.app",
-      "X-Title": "問一下 Wèn",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash-lite",
-      max_tokens: 2500,
-      messages: [
-        { role: "system", content: SYS },
-        ...messages
-      ],
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, system: SYS }),
   });
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.choices?.[0]?.message?.content || "解讀失敗，請稍後再試。";
+  if (data.error) throw new Error(data.error);
+  return data.text || "解讀失敗，請稍後再試。";
 }
 
 // ── Components ──
