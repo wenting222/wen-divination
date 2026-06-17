@@ -21,7 +21,7 @@ export default async function handler(req, res) {
         'X-Title': '問一下 Wèn',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-lite',
+        model: 'google/gemini-2.0-flash-exp:free',
         max_tokens: 2500,
         messages: [
           { role: 'system', content: system },
