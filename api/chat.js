@@ -15,42 +15,43 @@ export default async function handler(req, res) {
     const system = body.system;
     if (!messages) return res.status(400).json({ error: 'messages 欄位缺失' });
 
-    const key = process.env.VITE_OPENROUTER_API_KEY;
-    if (!key) return res.status(500).json({ error: 'API Key 未設定 (VITE_OPENROUTER_API_KEY)' });
+    const key = process.env.VITE_GEMINI_API_KEY;
+    if (!key) return res.status(500).json({ error: 'API Key 未設定 (VITE_GEMINI_API_KEY)' });
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`,
-        'HTTP-Referer': 'https://wen-divination.vercel.app',
-        'X-Title': 'Wen Divination',
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/llama-3.3-70b-instruct:free',
-        max_tokens: 2500,
-        messages: [
-          { role: 'system', content: system },
-          ...messages
-        ],
-      }),
-    });
+    // 把 messages 轉成 Gemini 格式
+    const contents = messages.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: system ? { parts: [{ text: system }] } : undefined,
+          contents,
+          generationConfig: { maxOutputTokens: 2500 },
+        }),
+      }
+    );
 
     const text_raw = await response.text();
-    console.log('OpenRouter raw response:', text_raw);
+    console.log('Gemini raw response:', text_raw.slice(0, 500));
 
     let data;
     try {
       data = JSON.parse(text_raw);
     } catch (parseErr) {
-      return res.status(500).json({ error: `OpenRouter 回應不是 JSON: ${text_raw.slice(0, 300)}` });
+      return res.status(500).json({ error: `Gemini 回應不是 JSON: ${text_raw.slice(0, 300)}` });
     }
 
     if (data.error) {
-      return res.status(500).json({ error: `OpenRouter 錯誤: ${JSON.stringify(data.error)}` });
+      return res.status(500).json({ error: `Gemini 錯誤: ${JSON.stringify(data.error)}` });
     }
 
-    const text = data.choices?.[0]?.message?.content || '解讀失敗，沒有取得內容';
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '解讀失敗，沒有取得內容';
     return res.status(200).json({ text });
   } catch (error) {
     console.log('Caught error:', error.message);
