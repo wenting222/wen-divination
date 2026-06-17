@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`,
         'HTTP-Referer': 'https://wen-divination.vercel.app',
-        'X-Title': '問一下 Wèn',
+        'X-Title': 'Wen Divination',
       },
       body: JSON.stringify({
         model: 'google/gemini-2.0-flash-exp:free',
